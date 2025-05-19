@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Sort Visualizer</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 40px auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        #bars { display: flex; align-items: flex-end; height: 300px; margin-bottom: 24px; }
+        .bar { flex: 1; margin: 0 2px; background: #3498db; border-radius: 4px 4px 0 0; transition: background 0.2s, height 0.2s; }
+        .bar.active { background: #e67e22; }
+        .bar.sorted { background: #2ecc71; }
+        button { padding: 10px 20px; font-size: 16px; border: none; border-radius: 4px; background: #3498db; color: #fff; cursor: pointer; margin-right: 10px; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bubble Sort Visualizer</h1>
+        <div style="margin-bottom: 16px;">
+            <label for="size">Array Size:</label>
+            <input type="range" id="size" min="5" max="100" value="30" style="vertical-align: middle;">
+            <span id="size-value">30</span>
+            <label for="speed" style="margin-left: 24px;">Animation Speed:</label>
+            <input type="range" id="speed" min="10" max="200" value="60" style="vertical-align: middle;">
+            <span id="speed-value">60ms</span>
+        </div>
+        <div id="bars"></div>
+        <button id="shuffle">Shuffle</button>
+        <button id="sort">Sort</button>
+    </div>
+    <script>
+        const barsContainer = document.getElementById('bars');
+        const shuffleBtn = document.getElementById('shuffle');
+        const sortBtn = document.getElementById('sort');
+        const sizeSlider = document.getElementById('size');
+        const sizeValue = document.getElementById('size-value');
+        const speedSlider = document.getElementById('speed');
+        const speedValue = document.getElementById('speed-value');
+        let array = [];
+        let BAR_COUNT = parseInt(sizeSlider.value);
+        let DELAY = parseInt(speedSlider.value);
+
+        function randomArray() {
+            array = Array.from({length: BAR_COUNT}, () => Math.floor(Math.random() * 250) + 30);
+        }
+
+        function renderBars(activeIndices = [], sortedIndex = BAR_COUNT) {
+            // Only update bar heights and classes for smooth animation
+            if (barsContainer.children.length === array.length) {
+                array.forEach((value, idx) => {
+                    const bar = barsContainer.children[idx];
+                    bar.style.height = value + 'px';
+                    bar.className = 'bar';
+                    if (activeIndices.includes(idx)) bar.classList.add('active');
+                    if (idx >= sortedIndex) bar.classList.add('sorted');
+                });
+            } else {
+                barsContainer.innerHTML = '';
+                array.forEach((value, idx) => {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = value + 'px';
+                    bar.style.transition = `background 0.2s, height 0.08s cubic-bezier(0.4,0,0.2,1)`;
+                    if (activeIndices.includes(idx)) bar.classList.add('active');
+                    if (idx >= sortedIndex) bar.classList.add('sorted');
+                    barsContainer.appendChild(bar);
+                });
+            }
+        }
+
+        async function bubbleSort() {
+            sortBtn.disabled = true;
+            shuffleBtn.disabled = true;
+            sizeSlider.disabled = true;
+            let n = array.length;
+            for (let i = 0; i < n - 1; i++) {
+                let swapped = false;
+                for (let j = 0; j < n - i - 1; j++) {
+                    renderBars([j, j+1], n - i);
+                    await new Promise(res => setTimeout(res, Math.max(8, DELAY / 3)));
+                    if (array[j] > array[j+1]) {
+                        [array[j], array[j+1]] = [array[j+1], array[j]];
+                        renderBars([j, j+1], n - i);
+                        await new Promise(res => setTimeout(res, Math.max(8, DELAY / 3)));
+                        swapped = true;
+                    }
+                }
+                if (!swapped) break;
+            }
+            renderBars([], 0);
+            sortBtn.disabled = false;
+            shuffleBtn.disabled = false;
+            sizeSlider.disabled = false;
+        }
+
+        shuffleBtn.onclick = () => {
+            randomArray();
+            renderBars();
+        };
+        sortBtn.onclick = () => bubbleSort();
+
+        sizeSlider.oninput = function() {
+            BAR_COUNT = parseInt(this.value);
+            sizeValue.textContent = this.value;
+            randomArray();
+            renderBars();
+        };
+        speedSlider.oninput = function() {
+            DELAY = parseInt(this.value);
+            speedValue.textContent = this.value + 'ms';
+        };
+
+        // Initialize
+        randomArray();
+        renderBars();
+    </script>
+</body>
+</html>
